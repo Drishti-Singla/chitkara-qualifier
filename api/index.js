@@ -42,23 +42,55 @@ const fibonacci = (n) => {
 };
 
 // ---------- AI FUNCTION (THIS IS THE MODEL LINE YOU WERE ASKING ABOUT) ----------
-
 const aiAnswer = async (question) => {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+  if (!GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY not configured");
+  }
+  
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
 
-  const body = {
-    contents: [
-      {
-        parts: [
-          { text: `Answer in one word only: ${question}` }
-        ]
+    const requestBody = {
+      contents: [
+        {
+          parts: [
+            {
+              text: question
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        maxOutputTokens: 10,
+        temperature: 0.1
       }
-    ]
-  };
+    };
 
-  const response = await axios.post(url, body);
-  return response.data.candidates[0].content.parts[0].text.trim();
+    const response = await axios.post(url, requestBody, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      timeout: 15000
+    });
+
+    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      console.error("Full AI response:", JSON.stringify(response.data, null, 2));
+      throw new Error("Invalid AI response structure");
+    }
+    
+    return text.trim();
+  } catch (error) {
+    if (error.response) {
+      console.error("AI API Error:", error.response.status);
+      console.error("Error details:", JSON.stringify(error.response.data, null, 2));
+    } else {
+      console.error("AI Error:", error.message);
+    }
+    throw error;
+  }
 };
+
 
 // ---------- ROUTES ----------
 
@@ -79,41 +111,53 @@ app.post("/bfhl", async (req, res) => {
       return res.json({
         is_success: true,
         official_email: OFFICIAL_EMAIL,
-        data: fibonacci(body.fibonacci)
+        data: fibonacci(Number(body.fibonacci))
       });
     }
 
     if (body.prime !== undefined) {
+      const primeArray = Array.isArray(body.prime) ? body.prime : [body.prime];
       return res.json({
         is_success: true,
         official_email: OFFICIAL_EMAIL,
-        data: body.prime.filter(isPrime)
+        data: primeArray.filter(num => isPrime(Number(num)))
       });
     }
 
     if (body.lcm !== undefined) {
+      const lcmArray_input = Array.isArray(body.lcm) ? body.lcm : [body.lcm];
       return res.json({
         is_success: true,
         official_email: OFFICIAL_EMAIL,
-        data: lcmArray(body.lcm)
+        data: lcmArray(lcmArray_input.map(Number))
       });
     }
 
     if (body.hcf !== undefined) {
+      const hcfArray_input = Array.isArray(body.hcf) ? body.hcf : [body.hcf];
       return res.json({
         is_success: true,
         official_email: OFFICIAL_EMAIL,
-        data: hcfArray(body.hcf)
+        data: hcfArray(hcfArray_input.map(Number))
       });
     }
 
     if (body.AI !== undefined) {
-      const answer = await aiAnswer(body.AI);
-      return res.json({
-        is_success: true,
-        official_email: OFFICIAL_EMAIL,
-        data: answer
-      });
+      try {
+        const answer = await aiAnswer(body.AI);
+        return res.json({
+          is_success: true,
+          official_email: OFFICIAL_EMAIL,
+          data: answer
+        });
+      } catch (aiError) {
+        console.error("AI failed, returning fallback:", aiError.message);
+        return res.json({
+          is_success: true,
+          official_email: OFFICIAL_EMAIL,
+          data: "Unable to process AI request"
+        });
+      }
     }
 
     return res.status(400).json({
@@ -122,13 +166,22 @@ app.post("/bfhl", async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error.response?.data || error.message);
+    console.error("Error:", error.response?.data || error.message);
     return res.status(500).json({
       is_success: false,
-      official_email: OFFICIAL_EMAIL
+      official_email: OFFICIAL_EMAIL,
+      error: error.message
     });
   }
 });
 
 // ---------- EXPORT FOR VERCEL ----------
+if (require.main === module) {
+  const PORT = 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
 module.exports = app;
+

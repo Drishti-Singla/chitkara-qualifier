@@ -10,9 +10,6 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 console.log("Gemini key loaded:", GEMINI_API_KEY ? "YES" : "NO");
 
-// ---------- HELPERS ----------
-
-// Prime check
 const isPrime = (num) => {
   if (num < 2) return false;
   for (let i = 2; i <= Math.sqrt(num); i++) {
@@ -21,16 +18,13 @@ const isPrime = (num) => {
   return true;
 };
 
-// GCD
 const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
 
-// LCM
 const lcm = (a, b) => (a * b) / gcd(a, b);
 
 const lcmArray = (arr) => arr.reduce((acc, val) => lcm(acc, val));
 const hcfArray = (arr) => arr.reduce((acc, val) => gcd(acc, val));
 
-// Fibonacci
 const fibonacci = (n) => {
   let a = 0, b = 1;
   const result = [];
@@ -41,12 +35,9 @@ const fibonacci = (n) => {
   return result;
 };
 
-// ---------- AI FUNCTION ----------
 const aiAnswer = async (question) => {
-  // Simple keyword-based responses (fallback since Gemini API has issues)
   const lowerQ = question.toLowerCase();
   
-  // Common questions
   if (lowerQ.includes('capital') && lowerQ.includes('maharashtra')) return 'Mumbai';
   if (lowerQ.includes('capital') && lowerQ.includes('india')) return 'Delhi';
   if (lowerQ.includes('color') && lowerQ.includes('sky')) return 'Blue';
@@ -56,14 +47,9 @@ const aiAnswer = async (question) => {
   if (lowerQ.includes('prime minister') && lowerQ.includes('india')) return 'Modi';
   if (lowerQ.includes('president') && lowerQ.includes('usa')) return 'Biden';
   
-  // Default response
   return 'Unknown';
 };
 
-
-// ---------- ROUTES ----------
-
-// Health check
 app.get("/health", (req, res) => {
   res.json({
     is_success: true,
@@ -71,7 +57,6 @@ app.get("/health", (req, res) => {
   });
 });
 
-// BFHL main route
 app.post("/bfhl", async (req, res) => {
   try {
     const body = req.body;
@@ -135,7 +120,6 @@ app.post("/bfhl", async (req, res) => {
   }
 });
 
-// ---------- EXPORT FOR VERCEL ----------
 if (require.main === module) {
   const PORT = 3000;
   app.listen(PORT, () => {

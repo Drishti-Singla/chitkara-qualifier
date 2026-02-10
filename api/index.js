@@ -10,6 +10,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 console.log("Gemini key loaded:", GEMINI_API_KEY ? "YES" : "NO");
 
+// Prime
 const isPrime = (num) => {
   if (num < 2) return false;
   for (let i = 2; i <= Math.sqrt(num); i++) {
@@ -18,13 +19,18 @@ const isPrime = (num) => {
   return true;
 };
 
+// GCD
 const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
 
+// LCM
 const lcm = (a, b) => (a * b) / gcd(a, b);
 
 const lcmArray = (arr) => arr.reduce((acc, val) => lcm(acc, val));
+
+// HCF
 const hcfArray = (arr) => arr.reduce((acc, val) => gcd(acc, val));
 
+// Fibonacci
 const fibonacci = (n) => {
   let a = 0, b = 1;
   const result = [];
@@ -35,6 +41,7 @@ const fibonacci = (n) => {
   return result;
 };
 
+// AI
 const aiAnswer = async (question) => {
   const lowerQ = question.toLowerCase();
   
@@ -50,6 +57,7 @@ const aiAnswer = async (question) => {
   return 'Unknown';
 };
 
+// Health
 app.get("/health", (req, res) => {
   res.json({
     is_success: true,
@@ -57,6 +65,7 @@ app.get("/health", (req, res) => {
   });
 });
 
+// BFHL
 app.post("/bfhl", async (req, res) => {
   try {
     const body = req.body;
